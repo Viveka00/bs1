@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blynk Gauge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.3.4/justgage.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+            font-family: Arial, sans-serif;
+        }
+
+        .gauges {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .gauge {
+            width: 250px;
+            height: 250px;
+            margin: 15px;
+        }
+
+        .gauge-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+    /* Basic styles */
+    body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+    .switch { display: inline-block; margin: 20px; }
+    
+    /* Toggle switch styles */
+    .switch input { display: none; }
+    .slider {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      background-color: #ccc;
+      border-radius: 34px;
+      cursor: pointer;
+      transition: background-color 0.4s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-color: white;
+      transition: transform 0.4s;
+      left: 4px;
+      bottom: 4px;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider::before {
+      transform: translateX(26px);
+    }
+    </style>
+</head>
+<body>
+    <!-- <h1>Control Blynk Switch</h1> -->
+    <div class="switch">
+      <label>
+        <input type="checkbox" onchange="toggleSwitch(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <br>
+    <div class="gauges">
+        <div class="gauge" id="temperatureGauge">
+            <div class="gauge-title">Temperature</div>
+            <div id="temperatureGaugeValue"></div>
+        </div>
+
+        <div class="gauge" id="humidityGauge">
+            <div class="gauge-title">Humidity</div>
+            <div id="humidityGaugeValue"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.3.4/justgage.min.js"></script>
+    <script>
+        // Initialize the gauges
+        const temperatureGauge = new JustGage({
+            id: "temperatureGaugeValue",
+            value: 0,
+            min: 0,
+            max: 150,
+            title: "°C",
+            label: "Temperature",
+            pointer: true,
+            gaugeWidthScale: 0.6,
+            levelColors: ["#00ff00", "#ff0000"]
+        });
+
+        const humidityGauge = new JustGage({
+            id: "humidityGaugeValue",
+            value: 0,
+            min: 0,
+            max: 150,
+            title: "%",
+            label: "Humidity",
+            pointer: true,
+            gaugeWidthScale: 0.6,
+            levelColors: ["#00ff00", "#ff0000"]
+        });
+
+        // Your Blynk API URL with your auth token
+        const apiUrl = "https://blynk.cloud/external/api/get?token=Kq-FenoXG9meodSm2vexfYCnz-i5Q4pt&V1&V2";
+        // const apiUrl = "https://blynk.cloud/external/api/get?token=GVVsff9vg5wHQ-eBVgB34y0OdpZjQWpv&V1&V2";
+
+        // Function to fetch data from Blynk API and update the values
+        function fetchData() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const temperature = data.V1; // Assuming V0 is for temperature
+                    const humidity = data.V2;    // Assuming V1 is for humidity
+
+                    // Update the gauges
+                    temperatureGauge.refresh(temperature);
+                    humidityGauge.refresh(humidity);
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+        function toggleSwitch(isChecked) {
+            const state = isChecked ? 1 : 0;
+            fetch(`https://blr1.blynk.cloud/external/api/update?token=Kq-FenoXG9meodSm2vexfYCnz-i5Q4pt&dataStreamId=1&value=${state}`)
+            // fetch(https://blr1.blynk.cloud/external/api/update?token=GVVsff9vg5wHQ-eBVgB34y0OdpZjQWpv&dataStreamId=1&value=${state})
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Fetch data immediately on load
+        fetchData();
+
+        // Fetch data every 10 seconds for real-time updates
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>
